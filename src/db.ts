@@ -1,5 +1,6 @@
 import { Pool, PoolClient } from 'pg';
 import { config } from './config.js';
+import { seedQuestions } from './data/seedQuestions.js';
 
 export const pool = new Pool({
   connectionString: config.databaseUrl,
@@ -93,6 +94,18 @@ export async function initTables() {
         updated_at TIMESTAMP DEFAULT NOW()
       )
     `);
+
+    const { rows } = await client.query('SELECT COUNT(*) FROM questions');
+    if (parseInt(rows[0].count, 10) === 0) {
+      for (const q of seedQuestions) {
+        await client.query(
+          `INSERT INTO questions (question, category, audience, type, options, active)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [q.question, q.category, q.audience, q.type, q.options, q.active]
+        );
+      }
+      console.log('Seed questions inserted');
+    }
 
     console.log('Tables initialized');
   } finally {
