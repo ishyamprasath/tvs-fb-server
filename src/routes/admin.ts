@@ -5,6 +5,7 @@ import { DailyResponse } from '../models/DailyResponse.js';
 import { Employee } from '../models/Employee.js';
 import { getBusinessDateKey, getBusinessDateOffset } from '../utils/businessDay.js';
 import { generateAiInsights } from '../utils/insights.js';
+import { pool } from '../db.js';
 
 const router = Router();
 
@@ -98,6 +99,35 @@ router.get('/dashboard', async (_req, res) => {
       };
     });
 
+  const allDailyResponses = await DailyResponse.find({}, { sort: { submittedAt: -1 } });
+  const allConfidential = await ConfidentialReport.find();
+
+  const allResponses = allDailyResponses.map((response) => {
+    const report = allConfidential.find(
+      (r) => r.employeeId === response.employeeId && r.businessDateKey === response.businessDateKey
+    );
+    return {
+      id: String(response._id),
+      employeeId: response.employeeId,
+      name: response.name,
+      department: response.department,
+      businessDateKey: response.businessDateKey,
+      submittedAt: response.submittedAt,
+      mood: response.mood,
+      moodScore: response.moodScore,
+      averageScore: response.averageScore,
+      stressScore: response.stressScore,
+      engagementScore: response.engagementScore,
+      productivityScore: response.productivityScore,
+      answers: response.answers,
+      confidentialNote: response.confidentialNote,
+      anonymousNote: response.anonymousNote,
+      aiCategory: report?.aiCategory,
+      sentiment: report?.sentiment,
+      priority: report?.priority,
+    };
+  });
+
   return res.json({
     overview: {
       totalEmployees,
@@ -124,7 +154,15 @@ router.get('/dashboard', async (_req, res) => {
     })),
     aiInsights,
     employeeDirectory,
+    allResponses,
   });
+});
+
+router.post('/reset', async (_req, res) => {
+  await pool.query('DELETE FROM daily_responses');
+  await pool.query('DELETE FROM confidential_reports');
+  await pool.query("DELETE FROM employees WHERE role != 'admin'");
+  return res.json({ message: 'All employee data has been reset. Admin account preserved.' });
 });
 
 export default router;
