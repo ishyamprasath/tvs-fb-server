@@ -161,8 +161,8 @@ router.get('/dashboard', async (_req, res) => {
 router.post('/reset', async (_req, res) => {
   await pool.query('DELETE FROM daily_responses');
   await pool.query('DELETE FROM confidential_reports');
-  await pool.query("DELETE FROM employees WHERE role != 'admin'");
-  return res.json({ message: 'All employee data has been reset. Admin account preserved.' });
+  await pool.query('DELETE FROM employees');
+  return res.json({ message: 'All data has been completely reset.' });
 });
 
 export default router;
