@@ -10,7 +10,9 @@ const app = express();
 
 app.use(
   cors({
-    origin: config.clientUrl,
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 app.use(express.json({ limit: '1mb' }));
